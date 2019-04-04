@@ -1,2 +1,1 @@
-(let true (lambda x (lambda y
-(x))))
+(import boolean (let f (\ x (((if (= x 0)) 1) (* x (f (- x 1)))))))

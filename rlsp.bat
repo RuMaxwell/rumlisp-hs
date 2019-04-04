@@ -1,1 +1,1 @@
-python parse.py %1 > rumlsp.exe
+python parse.py %1 | rlsp.exe
