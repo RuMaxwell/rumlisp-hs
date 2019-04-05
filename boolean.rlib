@@ -2,4 +2,7 @@
 (let false (\ x (\ y y))
 (let if (\ c (\ t (\ e ((c e) t))))
 (let not (\ c (\ t (\ e ((c t) e))))
-  ...))))
+(let and (\ a (\ b (a b false)))
+(let or (\ a (\ b (a true b)))
+(let xor (\ a (\ b ((or ((and a) (not b))) ((and (not a)) b)))))
+  ...)))))
