@@ -22,9 +22,9 @@ def preprocess(s: str):
   if len(matches) > 0:
     for match in matches: # `match` is a `str` here
       fname = match + '.rlib'
-      content = readFile(fname)
+      content = readFile(fname).strip()
       hpt = content.partition('...')
-      s = re.sub(pat, hpt[0], s)
+      s = re.sub(pat, hpt[0], s).strip()
       # Complement parentheses
       s += re.findall(re.compile(r'(\)+)'), hpt[2])[-1][1:]
       return preprocess(s) # Recursively resolve imports
@@ -43,25 +43,38 @@ def parse(s: str):
 
   # [ \t\n\r]+ => ','
   def ws2comma(matched) -> str:
-    return ','
-  s = regexReplaceAll(r'(?P<ws>[ \t\n\r]+)', s, ws2comma)
+    # Because re.sub matches non-overlapping patterns, so in case that the substituted string is:
+    #   '(op,1,2)'
+    # one substitution will just yield
+    #   '(op,.1,2)'
+    # The latter number is neglected because ',1,' is overlapped with ',2)'.
+    # So we should use ', ' instead of ',' to generate non-overlapping matches.
+    return ', '
+  s = regexReplaceAll(r'(?P<ws>\s+)', s, ws2comma)
+
+  # Fore-convertion of numbers
+  # Use a non-identifier character to prefix numbers.
+  # This is to prevent identifiers containing digits be converted to such like "xSInt 1".
+  def prefixNum(matched) -> str:
+    number = matched.group('number')
+    return number[0] + '.%s' % number[1:]
+  s = regexReplaceAll(r'(?P<number>[(\s,]\-?\d+[\s),])', s, prefixNum)
 
   # [A-Za-z_][A-Za-z0-9_?!]* => SBind "..."
   def iden2SBind(matched) -> str:
-    iden = matched.group("iden")
-    return 'SBind "%s"' % iden
-  s = regexReplaceAll(r'(?P<iden>[A-Za-z_?!@#$%^&*\-+=/\\~:|][A-Za-z0-9_?!@#$%^&*\-+=/\\~:|]*)', s, iden2SBind)
-  # s = regexReplaceAll(r'(?P<iden>[A-Za-z_][A-Za-z0-9_]*)', s, iden2SBind)
-
-  # [0-9]+ => SInt ...
-  def int2SInt(matched) -> str:
-    ints = matched.group("int")
-    return 'SInt %s' % ints
-  s = regexReplaceAll(r'(?P<int>\d+)', s, int2SInt)
+    iden = matched.group('iden')
+    return iden[0] + 'SBind "%s"' % iden[1:-1] + iden[-1]
+  s = regexReplaceAll(r'(?P<iden>[(\s,][A-Za-z_?!@#$%^&*\-+=<>/\\~:|][A-Za-z0-9_?!@#$%^&*\-+=<>/\\~:|]*[\s),])', s, iden2SBind)
 
   # ( => 'SExp [', ) => ']'
   s = s.replace('(', 'SExp [')
   s = s.replace(')', ']')
+
+  # [0-9]+ => SInt ...
+  def int2SInt(matched) -> str:
+    ints = matched.group('int')
+    return 'SInt (%s)' % ints[1:]
+  s = regexReplaceAll(r'(?P<int>\.\-?\d+)', s, int2SInt)
 
   return s
 

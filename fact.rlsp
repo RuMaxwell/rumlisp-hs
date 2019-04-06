@@ -1,1 +1,2 @@
-(import boolean (let f (\ x (((if (= x 0)) 1) (* x (f (- x 1)))))))
+(import boolean
+(((< -1 2) 1) 2))

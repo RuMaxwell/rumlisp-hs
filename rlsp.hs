@@ -54,18 +54,25 @@ interp (SExp [e1, e2]) env =
 interp (SExp [SBind op, e1, e2]) env =
   let v1 = interp e1 env
       v2 = interp e2 env
+      {- required import 'boolean' -}
+      true = interp (SBind "#t") env
+      false = interp (SBind "#f") env
   in case (v1, v2) of
     (VInt x, VInt y) -> case op of
       "+" -> VInt $ x + y
       "-" -> VInt $ x - y
       "*" -> VInt $ x * y
       "/" -> VInt $ x `div` y
-      "=" {- Required import 'boolean' -} -> if x == y then true else false
-        where true = interp (SBind "#t") env
-              false = interp (SBind "#f") env
+      "="  {- built-in op for lib 'boolean' -} -> if x == y then true else false
+      "!=" {- built-in op for lib 'boolean' -} -> if x /= y then true else false
+      ">"  {- built-in op for lib 'boolean' -} -> if x > y then true else false
+      "<"  {- built-in op for lib 'boolean' -} -> if x < y then true else false
+      "<=" {- built-in op for lib 'boolean' -} -> if x <= y then true else false
+      ">=" {- built-in op for lib 'boolean' -} -> if x >= y then true else false
       _ -> error $ "undefined operator " ++ op
     _ -> error $ "applying operator " ++ op ++ " on improper values"
 interp _ _ = error "invalid syntax"
+
 
 -- TODO: This implementation does not allow recursion by directly invoking a bind name of the lambda function.
 -- TODO: Should add a new method of defining recursive function, otherwise writing recurses will always require Y-combinator.
