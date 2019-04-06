@@ -1,0 +1,6 @@
+It is not possible to use the traditional Y-Combinator such as:
+  Y = \f . (\x . f (x x)) (\x . f (x x))
+directly because it causes recursively infinite function creation.
+
+We need to use a programmable Y-Combinator to perform its job, like
+the two examples in this directory.

@@ -16,8 +16,9 @@ def readFile(fn):
 
 def preprocess(s: str):
   # (import 'env' ...) => (let (***) ...)
-  # `...` is syntax request
-  pat = re.compile(r'\(import\s+(?P<envname>[A-Za-z0-9_!@#$%^&\-=~][A-Za-z0-9_!@#$%^&\-=~]*)')
+  # `...` is syntax request.
+  # Subdirectory is allowed.
+  pat = re.compile(r'\(import\s+(?P<envname>[A-Za-z0-9_!@#$%^&\-=~][A-Za-z0-9_!@#$%^&\-=~/]*)')
   matches = re.findall(pat, s)
   if len(matches) > 0:
     for match in matches: # `match` is a `str` here
