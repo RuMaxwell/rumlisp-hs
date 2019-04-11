@@ -21,14 +21,22 @@ def preprocess(s: str):
   pat = re.compile(r'\(import\s+(?P<envname>[A-Za-z0-9_!@#$%^&\-=~][A-Za-z0-9_!@#$%^&\-=~/]*)')
   matches = re.findall(pat, s)
   if len(matches) > 0:
-    for match in matches: # `match` is a `str` here
+    # for match in matches: # `match` is a `str` here
+    i = 0
+    while i < len(matches):
+      match = matches[i]
       fname = match + '.rlib'
-      content = readFile(fname).strip()
+      content = ''
+      try:
+        content = readFile(fname).strip()
+      except FileNotFoundError as _:
+        print('IMPORT: no such file: %s' % fname)
+        return s
       hpt = content.partition('...')
-      s = re.sub(pat, hpt[0], s).strip()
+      s = re.sub(pat, hpt[0], s, 1).strip()
       # Complement parentheses
       s += re.findall(re.compile(r'(\)+)'), hpt[2])[-1][1:]
-      return preprocess(s) # Recursively resolve imports
+      i += 1
   return s
 
 
@@ -81,9 +89,13 @@ def parse(s: str):
 
 
 def repl():
-  expr = input("rlsp> ")
-  s = parse(expr)
-  os.system('@echo %s | rlsp.exe' % repr(s)[1:-1])
+  expr = ''
+  while True:
+    expr = input("rlsp> ")
+    if expr == '(quit)':
+      break
+    s = parse(expr)
+    os.system('@echo %s | rlsp.exe' % repr(s)[1:-1])
 
 
 def foldl(f, acc, s: list):

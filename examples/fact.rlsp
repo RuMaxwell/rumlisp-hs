@@ -1,10 +1,9 @@
 (import examples/boolean
-(let y
-  (\ gen
-    ((\ g (g g)) (\ f (\ args ((gen (f f)) args)))))
+(import examples/Y
+(let G (\ fac
+  (\ n
+    (((<= n 0) 1)
+      (* n (fac (- n 1))))))
 (let fact
-  (y (\ fac
-       (\ n
-         (((<= n 0) 1)
-          (* n (fac (- n 1)))))))
-(fact 6))))
+  (y G)
+(fact 20)))))

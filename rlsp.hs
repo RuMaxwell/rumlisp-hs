@@ -9,12 +9,12 @@ data Closure = Closure
   , closure :: Env
   } deriving Show
 
-data SExp = SInt Int | SBind String | SExp [SExp] deriving (Read, Show)
+data SExp = SInt Int | SBind String | SExp [SExp] deriving Read
 
--- instance Show SExp where
---   show (SInt x) = show x
---   show (SBind x) = x
---   show (SExp xs) = show xs
+instance Show SExp where
+  show (SInt x) = show x
+  show (SBind x) = x
+  show (SExp xs) = show xs
 
 
 emptyEnv :: Env
@@ -26,6 +26,14 @@ extEnv x v = (Binding x v :)
 lookUp :: String -> Env -> Maybe Binding
 lookUp _ [] = Nothing
 lookUp x (b:bs) = if x == bname b then Just b else lookUp x bs
+
+
+errNonCallable :: Value -> String
+errNonCallable obj = "calling on non-callable object `" ++ show obj ++ "`"
+
+builtInOps :: [String]
+builtInOps = ["+", "-", "*", "/", "=", "!=", ">", "<", ">=", "<="]
+
 
 interp :: SExp -> Env -> Value
 -- 1
@@ -49,28 +57,34 @@ interp (SExp [e1, e2]) env =
       v2 = interp e2 env
   in case v1 of
     (VClos (Closure p fe fenv)) -> interp fe $ extEnv p v2 fenv
-    _ -> error $ "calling to non-callable object " ++ show v1
--- (op e1 e2)
-interp (SExp [SBind op, e1, e2]) env =
-  let v1 = interp e1 env
-      v2 = interp e2 env
-      {- required import 'boolean' -}
-      true = interp (SBind "#t") env
-      false = interp (SBind "#f") env
-  in case (v1, v2) of
-    (VInt x, VInt y) -> case op of
-      "+" -> VInt $ x + y
-      "-" -> VInt $ x - y
-      "*" -> VInt $ x * y
-      "/" -> VInt $ x `div` y
-      "="  {- built-in op for lib 'boolean' -} -> if x == y then true else false
-      "!=" {- built-in op for lib 'boolean' -} -> if x /= y then true else false
-      ">"  {- built-in op for lib 'boolean' -} -> if x > y then true else false
-      "<"  {- built-in op for lib 'boolean' -} -> if x < y then true else false
-      "<=" {- built-in op for lib 'boolean' -} -> if x <= y then true else false
-      ">=" {- built-in op for lib 'boolean' -} -> if x >= y then true else false
-      _ -> error $ "undefined operator " ++ op
-    _ -> error $ "applying operator " ++ op ++ " on improper values"
+    _ -> error $ errNonCallable v1
+-- Function call
+interp (SExp (fe:ps)) env = case fe of
+  (SInt x) -> error $ errNonCallable $ VInt x
+  (SBind op) -> if op `elem` builtInOps then
+    let {- true, false: required import 'boolean' -}
+        true = interp (SBind "#t") env
+        false = interp (SBind "#f") env
+        opf :: String -> Value -> Value -> Value
+        opf "+" (VInt x) (VInt y) = VInt $ x + y
+        opf "-" (VInt x) (VInt y) = VInt $ x - y
+        opf "*" (VInt x) (VInt y) = VInt $ x * y
+        opf "/" (VInt x) (VInt y) = VInt $ x `div` y
+        opf "="  {- for lib 'boolean' -} (VInt x) (VInt y) = if x == y then true else false
+        opf "!=" {- for lib 'boolean' -} (VInt x) (VInt y) = if x /= y then true else false
+        opf ">"  {- for lib 'boolean' -} (VInt x) (VInt y) = if x > y then true else false
+        opf "<"  {- for lib 'boolean' -} (VInt x) (VInt y) = if x < y then true else false
+        opf "<=" {- for lib 'boolean' -} (VInt x) (VInt y) = if x <= y then true else false
+        opf ">=" {- for lib 'boolean' -} (VInt x) (VInt y) = if x >= y then true else false
+        opf o x y = error $ "applying operator " ++ op ++ " on improper values `" ++ show x ++ "` and `" ++ show y ++ "`"
+        vs = map (`interp` env) ps
+    in foldl1 (opf op) vs
+    else interp (foldl (\ exp arg -> SExp [exp, arg]) fe ps) env
+  _ -> interp (foldl (\ exp arg -> SExp [exp, arg]) fe ps) env
+  {- foldl :: (b -> a -> b) -> b -> [a] -> b
+    ps = [f, a0, a1, ...]
+    res = interp (SExp [SExp [SExp [f, a0], a1], ...]) env
+  -}
 interp _ _ = error "invalid syntax"
 
 
