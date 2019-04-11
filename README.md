@@ -31,6 +31,10 @@ A Lisp dialect, with Haskell-interpreter and Python-preprocessor. Features expan
         [*] Dynamic argument types (Int or Lambda)
         [*] Dynamic evaluation type (Int or Lambda)
         [*] Dynamic function
+[+] Practicability / IO / Operating Systems
+    [*] Integral (64-bit) numeric computation
+    [ ] Standard input / output
+    [ ] File read / write
 [+] Macros
     [*] Environment import
         Simple model substitution mechanism, which enables importing environment (`let` bindings) from multiple files.
