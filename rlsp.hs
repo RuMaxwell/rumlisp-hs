@@ -45,12 +45,12 @@ interp (SBind x) env = let b = lookUp x env in case b of
 -- (1) | (x)
 interp (SExp [x]) env = interp x env -- This rule does not apply when functions can have no parameter.
 -- (let bn be exp)
-interp (SExp [SBind "let" {-YOU CAN ONLY use constant here!!!! An identifier will be treated as a binding name-}
+interp (SExp [SBind "let" {- MUST be a constant here!!!! An identifier will be treated as a binding name-}
   , SBind bn, be, exp]) env =
   let bv = interp be env
   in interp exp (extEnv bn bv env)
 -- (\ p exp)
-interp (SExp [SBind "\\" {-YOU CAN ONLY use constant here!!!!-}, SBind p, exp]) env = VClos $ Closure p exp env
+interp (SExp [SBind "\\" {- MUST be a constant here!!!!-}, SBind p, exp]) env = VClos $ Closure p exp env
 -- (e1 e2)
 interp (SExp [e1, e2]) env =
   let v1 = interp e1 env
@@ -76,7 +76,7 @@ interp (SExp (fe:ps)) env = case fe of
         opf "<"  {- for lib 'boolean' -} (VInt x) (VInt y) = if x < y then true else false
         opf "<=" {- for lib 'boolean' -} (VInt x) (VInt y) = if x <= y then true else false
         opf ">=" {- for lib 'boolean' -} (VInt x) (VInt y) = if x >= y then true else false
-        opf o x y = error $ "applying operator " ++ op ++ " on improper values `" ++ show x ++ "` and `" ++ show y ++ "`"
+        opf _ x y = error $ "applying operator " ++ op ++ " on improper values `" ++ show x ++ "` and `" ++ show y ++ "`"
         vs = map (`interp` env) ps
     in foldl1 (opf op) vs
     else interp (foldl (\ exp arg -> SExp [exp, arg]) fe ps) env

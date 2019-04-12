@@ -2,6 +2,9 @@ import os
 import re
 from sys import argv
 
+sourcePath = ''
+
+
 def regexReplaceAll(regex: str, s: str, replaceFunc):
   pattern = re.compile(regex)
   return re.sub(pattern, replaceFunc, s)
@@ -25,12 +28,13 @@ def preprocess(s: str):
     i = 0
     while i < len(matches):
       match = matches[i]
-      fname = match + '.rlib'
+      fname = '%s/%s.rlib' % (sourcePath, match)
       content = ''
       try:
         content = readFile(fname).strip()
       except FileNotFoundError as _:
         print('IMPORT: no such file: %s' % fname)
+        exit(1)
         return s
       hpt = content.partition('...')
       s = re.sub(pat, hpt[0], s, 1).strip()
@@ -104,11 +108,14 @@ def foldl(f, acc, s: list):
 
 
 def main():
+  global sourcePath
+  sourcePath = os.path.dirname(__file__)
   if len(argv) > 1:
     if argv[1] == 'i':
       print(repr(parse(argv[2]))[1:-1])
     else:
       content = readFile(argv[1])
+      sourcePath = os.path.dirname(argv[1])
       if content is not None:
         print(repr(parse(content))[1:-1])
   else:

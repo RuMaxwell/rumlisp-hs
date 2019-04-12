@@ -1,5 +1,5 @@
-(import examples/boolean
-(import examples/Y
+(import boolean
+(import Y
 (let G (\ fac
   (\ n
     (((<= n 0) 1)
