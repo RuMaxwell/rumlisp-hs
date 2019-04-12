@@ -1,4 +1,2 @@
-(import boolean
-(import curryops
 (let ++ (+ 1)
-  (++ 1))))
+  (++ 1))

@@ -17,7 +17,19 @@ def readFile(fn):
   return content
 
 
+def defaultImports() -> (str, str):
+  return ('(import boolean (import curryops', '))')
+
+def standardLibPath() -> str:
+  return '%s/stdlib' % os.curdir
+
 def preprocess(s: str):
+  di = defaultImports()
+  s = di[0] + s.strip() + di[1]
+
+  # Delete redundant whitespaces between two closing parentheses
+  s = re.sub(r'(\)\s+\))', '))', s)
+
   # (import 'env' ...) => (let (***) ...)
   # `...` is syntax request.
   # Subdirectory is allowed.
@@ -29,13 +41,14 @@ def preprocess(s: str):
     while i < len(matches):
       match = matches[i]
       fname = '%s/%s.rlib' % (sourcePath, match)
-      content = ''
-      try:
-        content = readFile(fname).strip()
-      except FileNotFoundError as _:
-        print('IMPORT: no such file: %s' % fname)
-        exit(1)
-        return s
+      if not os.path.exists(fname):
+        fname = '%s/%s.rlib' % (standardLibPath(), match)
+        if not os.path.exists(fname):
+          print('IMPORT: no such file: %s' % fname)
+          exit(1)
+
+      content = readFile(fname).strip()
+
       hpt = content.partition('...')
       s = re.sub(pat, hpt[0], s, 1).strip()
       # Complement parentheses
@@ -109,7 +122,7 @@ def foldl(f, acc, s: list):
 
 def main():
   global sourcePath
-  sourcePath = os.path.dirname(__file__)
+  sourcePath = os.curdir
   if len(argv) > 1:
     if argv[1] == 'i':
       print(repr(parse(argv[2]))[1:-1])

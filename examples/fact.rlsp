@@ -1,4 +1,3 @@
-(import boolean
 (import Y
 (let G (\ fac
   (\ n
@@ -6,4 +5,4 @@
       (* n (fac (- n 1))))))
 (let fact
   (y G)
-(fact 20)))))
+(fact 20))))
