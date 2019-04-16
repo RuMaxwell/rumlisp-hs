@@ -2,6 +2,7 @@ __pycache__/
 *.hi
 *.o
 *.exe
+rlsp
 .vscode/
 *.bat
 *.sh
